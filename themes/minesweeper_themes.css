@@ -1,0 +1,69 @@
+.ms_table {border-collapse:collapse; width: auto;}
+.ms_table * {padding: 0; margin:0;}
+
+.oldSchool {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #FFF;
+  border-bottom: 2px solid #FFF;
+}
+
+.oldSchool td {
+  background: #ccc url(oldSchool/blank.gif) 0 0 no-repeat;
+  height: 16px;
+  width: 16px;
+}
+
+.oldSchool td:hover, td.jhover {background-image: url(old-school/minesweeper/hover.gif);}
+.oldSchool td.near1{background-image: url(oldSchool/minesweeper/1.gif);}
+.oldSchool td.near2{background-image: url(oldSchool/minesweeper/2.gif);}
+.oldSchool td.near3{background-image: url(oldSchool/minesweeper/3.gif);}
+.oldSchool td.near4{background-image: url(oldSchool/minesweeper/4.gif);}
+.oldSchool td.near5{background-image: url(oldSchool/minesweeper/5.gif);}
+.oldSchool td.near6{background-image: url(oldSchool/minesweeper/6.gif);}
+.oldSchool td.near7{background-image: url(oldSchool/minesweeper/7.gif);}
+.oldSchool td.near8{background-image: url(oldSchool/minesweeper/8.gif);}
+.oldSchool td.empty{background-image: url(oldSchool/minesweeper/empty.gif);}
+.oldSchool td.flag{background-image: url(oldSchool/minesweeper/flag.gif);}
+.oldSchool td.question{background-image: url(oldSchool/minesweeper/question.gif);}
+.oldSchool td.mine{background-image: url(oldSchool/minesweeper/mine.gif);}
+.oldSchool td.mineSplode{background-image: url(oldSchool/minesweeper/mineSplode.gif);}
+.oldSchool td.notMine{background-image: url(oldSchool/minesweeper/notMine.gif);}
+
+.snazzy {border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #FFF;
+  border-bottom: 2px solid #FFF;
+}
+
+.tron {
+  border-right: 1px solid #5c0088;
+  border-bottom: 1px solid #5c0088;
+  }
+
+.ms_table td {
+  background: url(snazzy/sprite.png) 0 0 no-repeat;
+  height: 20px;
+  width: 20px;
+  cursor: pointer;
+}
+
+.ms_table.tron td {background-image: url(tron/sprite.png);}
+
+.ms_table td.blank:hover {background-position: -20px 0;}
+.ms_table td.near1 {background-position: 0 -20px}
+.ms_table td.near2 {background-position: 0 -40px}
+.ms_table td.near3 {background-position: 0 -60px}
+.ms_table td.near4 {background-position: 0 -80px}
+.ms_table td.near5 {background-position: 0 -100px}
+.ms_table td.near6 {background-position: 0 -120px}
+.ms_table td.near7 {background-position: 0 -140px}
+.ms_table td.near8 {background-position: 0 -160px}
+.ms_table td.empty {background-position: 0 -180px;}
+.ms_table td.flag {background-position: 0 -200px;}
+.ms_table td.flag:hover {background-position: -20px -200px;}
+.ms_table td.mine {background-position: 0 -220px;}
+.ms_table td.mineSplode {background-position: 0 -240px;}
+.ms_table td.notMine {background-position: 0 -260px;}
+.ms_table td.question {background-position: 0 -280px;}
+.ms_table td.question:hover {background-position: -20px -280px;}
