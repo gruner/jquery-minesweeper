@@ -4,9 +4,8 @@
         // build main options before element iteration
         var opts = $.extend({}, $.fn.minesweeper.defaults, options);
     
-        // iterate and reformat each matched element
         return this.each(function() {
-            $this = $(this);
+            $container = $(this);
         
             // build element specific options
             var o = $.meta ? $.extend({}, opts, $this.data()) : opts;
@@ -15,8 +14,10 @@
             Minesweeper.prototype = $.fn.minesweeper.gameEngine;
             
             var ms = new Minesweeper();
-            ms.init($this, o.mineCount, o.rowCount, o.columnCount, o.theme);
+            ms.init($container, o.mineCount, o.rowCount, o.columnCount, o.theme);
             ms.run();
+            
+            //$.fn.minesweeper.view.init($container, o.mineCount, o.rowCount, o.columnCount, o.theme);
         });
     };
     
@@ -29,16 +30,161 @@
     };
 
     // Creates the game controlls and UI
-    $.fn.minesweeper.controlls = {
-        init: function($container) {
+    $.fn.minesweeper.view = {
+        
+        el: {
+            btnConfig: $('<a data-js="modal" id="ms_info" href="#" rel="#ms_config">info</a>'),
+            levelSelect: $('#ms_level_select'),
+            inputRows: $('#ms_rows'),
+            inputColumns: $('#ms_columns'),
+            inputMines: $('#ms_mines'),
+            btnStart: $('#ms_btn_start'),
+            btnCancel: $('#ms_btn_cancel'),
+            config: $('#ms_config'),
+            statusBar: $('#ms_status')
+        },
+        
+        init: function($container, mineCount, rowCount, columnCount, themeClass) {
+            this.el.container = $container;
+            this.mineCount = mineCount;
+            this.rowCount = rowCount;
+            this.columnCount = columnCount;
+            this.themeClass = themeClass;
+            
+            this.setInputs('easy');
+            this.enableEvents();
+            
+            this.startGame(this.levels.easy);
+            
+            this.render();
+        },
+        
+        enableEvents: function() {
+            
+            var self = this;
+            
+            if ($.fn.overlay) {
+                this.el.btnConfig.overlay();
+            }
+            
+            this.el.levelSelect.change(function() {
+                self.setInputs($(this).val());
+            });
+            
+            this.el.btnStart.click(function(e) {
+                var config = {
+                    rowCount: self.el.inputRows.val(),
+                    columnCount: self.el.inputColumns.val(),
+                    mineCount: self.el.inputMines.val()
+                };
+                
+                // close modal
+                self.el.btnConfig.overlay().close();
+                
+                self.startGame(config);
+                
+                return false;
+            });
+            
+            this.el.btnCancel.click(function(e) {
+                // close modal
+                self.el.btnConfig.overlay().close();
+                return false;
+            });
+        },
+        
+        html: {
+            // Returns the table html populated with rows and columns
+            getTable: function(rowCount, columnCount, themeClass) {
+                var msTable = '<table class="ms_table ' + themeClass + '">';
+
+                for (var row=0; row < rowCount; row++) {
+                    msTable += '<tr>';
+                    for (var col=0; col < columnCount; col++) {
+                        msTable += '<td id="'+ row +'-'+ col +'" class="blank"></td>';
+                    }
+                    msTable += '</tr>';
+                }
+                msTable += '</table>';
+
+                return msTable;
+            },
+            
+            getStatusBar: function() {
+                return '<div id="ms_status" class="ms_status"></div>';
+            },
+            
+            getMineCounter: function(mineCount) {
+                return '<div class="ms_counter">' + mineCount + '</div>';
+            },
+
+
+            getTimer: function() {
+                return '<div class="ms_timer">0</div>';
+            }
+        },
+        
+        render: function() {
+            this.el.msTable = $(this.html.getTable(this.rowCount, this.columnCount, this.themeClass));
+            this.el.timer = $(this.html.getTimer());
+            this.el.counter = $(this.html.getMineCounter(this.mineCount));
+            
+            this.el.statusBar = $(this.html.getStatusBar())
+                .append(this.el.timer)
+                .append(this.el.counter)
+                .append(this.el.btnConfig.clone(true))
+                ;
+            
+            var $gameContainer = $('<div class="ms_container"></div>');
+            
+            $gameContainer
+                .append(this.el.msTable)
+                .append(this.el.statusBar)
+                ;
+            
+            this.el.container.html($gameContainer);
+        },
+        
+        startGame: function(config) {
+            if ($.fn.minesweeper) {
+                $container.minesweeper($.extend({}, config, {theme: 'tron'}));
+            }
+        },
+        
+        // Sets form input values
+        setInputs: function(level) {
+            if (this.levels[level]) {
+                this.el.inputRows.val(this.levels[level].rowCount);
+                this.el.inputColumns.val(this.levels[level].columnCount);
+                this.el.inputMines.val(this.levels[level].mineCount);
+            }
         }
     };
     
     // Expose the game engine for unit testing
     $.fn.minesweeper.gameEngine = {
+        levels: {
+            easy: {
+                columnCount: 20,
+                rowCount: 20,
+                mineCount: 40
+            },
+            medium: {
+                columnCount: 40,
+                rowCount: 20,
+                mineCount: 80
+            },
+            hard: {
+                columnCount: 80,
+                rowCount: 20,
+                mineCount: 150
+            }
+        },
+        
         init: function($container, mineCount, rowCount, columnCount, themeClass) {
             
             // create state properties
+            this.$container = $container;
             this.mineLocations = this.distributeMines(mineCount, rowCount, columnCount);
             this.rowCount = rowCount;
             this.columnCount = columnCount;
@@ -46,7 +192,6 @@
             this.mineCount = mineCount;
             this.seconds = 0;
             this.userMineCount = mineCount; // The mines the user has marked
-            this.$container = $container;
             
             // create a virtual game grid and pre-populate mine counts & locations
             this.gameGrid = this.populateGrid(this.createGrid(this.mineLocations, rowCount, columnCount), this.mineLocations);
