@@ -4,14 +4,10 @@ $(document).ready( function() {
     Minesweeper.prototype = $.fn.minesweeper.gameEngine;
 
     function getFixture() {
-        var ms = new Minesweeper();
-        // ms.init($this, o.mineCount, o.rowCount, o.columnCount, o.theme);
-        // ms.run();
-
-        return ms;
+        return new Minesweeper();
     }
 
-    test("distribute mines", function() {
+    test("distributeMines", function() {
 
         var ms = getFixture(),
             mineCount = 40,
@@ -24,8 +20,14 @@ $(document).ready( function() {
         }
 
         ok(result);
-
         equal(resultCount, mineCount);
+    });
+
+    test("getCellId", function() {
+        var ms = getFixture();
+        equal(ms.getCellId(2,10), '2-10');
+        equal(ms.getCellId(20,10), '20-10');
+        equal(ms.getCellId(0,10), '0-10');
     });
 
 });

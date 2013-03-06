@@ -25,7 +25,13 @@
         mineCount: 40,
         rowCount: 20,
         columnCount: 20,
-        theme: 'oldSchool'
+        theme: 'snazzy'
+    };
+
+    // Creates the game controlls and UI
+    $.fn.minesweeper.controlls = {
+        init: function($container) {
+        }
     };
     
     // Expose the game engine for unit testing
