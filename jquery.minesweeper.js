@@ -59,7 +59,7 @@
                 .append(this.$counter)
                 ;
             
-            $this.container
+            this.$container
                 .append(this.$msTable)
                 .append($statusDiv)
                 ;
@@ -120,12 +120,16 @@
             });
 
             // Disable right-click context menu on the table
-            this.$msTable.noContext();
+            if ($.fn.noContext) {
+                this.$msTable.noContext();
+            }
 
             // Set right-click behavior
-            this.$msTable.rightClick(function(e) {
-                self.rightClick($(e.target));
-            });
+            if ($.fn.rightClick) {
+                this.$msTable.rightClick(function(e) {
+                    self.rightClick($(e.target));
+                });
+            }
         },
 
 
@@ -187,6 +191,7 @@
         
 
         startTimer: function() {
+            if (! $.fn.timer) { return; }
             var self = this;
             this.timer = $.timer(1000, function(timer) {
                 self.seconds++;
@@ -228,7 +233,7 @@
                 this.$msTable.find('.blank').removeClass('blank');
 
                 // stop timer
-                this.timer.stop();
+                if (this.timer) { this.timer.stop(); }
             }
         },
         
