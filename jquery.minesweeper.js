@@ -5,19 +5,29 @@
         var opts = $.extend({}, $.fn.minesweeper.defaults, options);
     
         return this.each(function() {
-            $container = $(this);
+            $this = $(this);
         
             // build element specific options
             var o = $.meta ? $.extend({}, opts, $this.data()) : opts;
             
             var Minesweeper = function() {};
             Minesweeper.prototype = $.fn.minesweeper.gameEngine;
+
+            var MinesweeperView = function() {};
+            MinesweeperView.prototype = $.fn.minesweeper.view;
             
-            var ms = new Minesweeper();
-            ms.init($container, o.mineCount, o.rowCount, o.columnCount, o.theme);
+            var ms = new Minesweeper(),
+                msView = new MinesweeperView();
+
+            msView.init($this, o.mineCount, o.rowCount, o.columnCount, theme);
+            ms.init(o.mineCount, o.rowCount, o.columnCount, msView);
+
+            msView.on('ms.gameStart', function(e, config) {
+                // todo: tear down existing instances and create new ones
+                console.log('ms.gameStart');
+            });
+
             ms.run();
-            
-            //$.fn.minesweeper.view.init($container, o.mineCount, o.rowCount, o.columnCount, o.theme);
         });
     };
     
@@ -31,32 +41,31 @@
 
     // Creates the game controlls and UI
     $.fn.minesweeper.view = {
-        
-        el: {
-            btnConfig: $('<a data-js="modal" id="ms_info" href="#" rel="#ms_config">info</a>'),
-            levelSelect: $('#ms_level_select'),
-            inputRows: $('#ms_rows'),
-            inputColumns: $('#ms_columns'),
-            inputMines: $('#ms_mines'),
-            btnStart: $('#ms_btn_start'),
-            btnCancel: $('#ms_btn_cancel'),
-            config: $('#ms_config'),
-            statusBar: $('#ms_status')
-        },
-        
+
         init: function($container, mineCount, rowCount, columnCount, themeClass) {
+            this.el = {};
             this.el.container = $container;
+
             this.mineCount = mineCount;
             this.rowCount = rowCount;
             this.columnCount = columnCount;
             this.themeClass = themeClass;
-            
-            this.setInputs('easy');
-            this.enableEvents();
-            
-            this.startGame(this.levels.easy);
-            
-            this.render();
+        },
+
+        getElements: function() {
+            this.el.btnConfig = $('<a data-js="modal" id="ms_info" href="#" rel="#ms_config">info</a>');
+            this.el.levelSelect = $('#ms_level_select');
+            this.el.inputRows = $('#ms_rows');
+            this.el.inputColumns = $('#ms_columns');
+            this.el.inputMines = $('#ms_mines');
+            this.el.btnStart = $('#ms_btn_start');
+            this.el.btnCancel = $('#ms_btn_cancel');
+            this.el.config = $('#ms_config');
+
+            // fragments
+            this.el.statusBar = $('<div id="ms_status" class="ms_status"></div>');
+            this.el.timer = $('<div class="ms_timer">0</div>');
+            this.el.gameContainer = $('<div class="ms_container"></div>');
         },
         
         enableEvents: function() {
@@ -67,10 +76,14 @@
                 this.el.btnConfig.overlay();
             }
             
+            // Change the game inputs to match the
+            // settings of the selected level
             this.el.levelSelect.change(function() {
                 self.setInputs($(this).val());
             });
             
+            // Get the current level settings and
+            // trigger the gameStart event
             this.el.btnStart.click(function(e) {
                 var config = {
                     rowCount: self.el.inputRows.val(),
@@ -80,8 +93,8 @@
                 
                 // close modal
                 self.el.btnConfig.overlay().close();
-                
-                self.startGame(config);
+
+                self.trigger('ms.gameStart', config);
                 
                 return false;
             });
@@ -91,6 +104,24 @@
                 self.el.btnConfig.overlay().close();
                 return false;
             });
+
+            // Delegate cell clicks to the parent table
+            // Trigger the custom event for revealing the cell
+            this.el.msTable.delegate('td', 'click', function(e) {
+                self.trigger('ms.cellReveal', $(this));
+            });
+
+            // Disable right-click context menu on the table
+            if ($.fn.noContext) {
+                this.el.msTable.noContext();
+            }
+
+            // Set right-click behavior
+            if ($.fn.rightClick) {
+                this.$msTable.rightClick(function(e) {
+                    self.trigger('ms.cellRightClick', $(e.target));
+                });
+            }
         },
         
         html: {
@@ -110,45 +141,30 @@
                 return msTable;
             },
             
-            getStatusBar: function() {
-                return '<div id="ms_status" class="ms_status"></div>';
-            },
-            
             getMineCounter: function(mineCount) {
                 return '<div class="ms_counter">' + mineCount + '</div>';
-            },
-
-
-            getTimer: function() {
-                return '<div class="ms_timer">0</div>';
             }
         },
         
         render: function() {
-            this.el.msTable = $(this.html.getTable(this.rowCount, this.columnCount, this.themeClass));
-            this.el.timer = $(this.html.getTimer());
+            this.getElements();
+            
             this.el.counter = $(this.html.getMineCounter(this.mineCount));
             
-            this.el.statusBar = $(this.html.getStatusBar())
+            this.el.statusBar
                 .append(this.el.timer)
                 .append(this.el.counter)
                 .append(this.el.btnConfig.clone(true))
                 ;
+
+            this.el.msTable = $(this.html.getTable(this.rowCount, this.columnCount, this.themeClass));
             
-            var $gameContainer = $('<div class="ms_container"></div>');
-            
-            $gameContainer
+            this.el.gameContainer
                 .append(this.el.msTable)
                 .append(this.el.statusBar)
                 ;
             
-            this.el.container.html($gameContainer);
-        },
-        
-        startGame: function(config) {
-            if ($.fn.minesweeper) {
-                $container.minesweeper($.extend({}, config, {theme: 'tron'}));
-            }
+            this.el.container.html(this.el.gameContainer.clone(true));
         },
         
         // Sets form input values
@@ -181,14 +197,15 @@
             }
         },
         
-        init: function($container, mineCount, rowCount, columnCount, themeClass) {
-            
+        init: function(mineCount, rowCount, columnCount, view) {
+
             // create state properties
-            this.$container = $container;
             this.mineLocations = this.distributeMines(mineCount, rowCount, columnCount);
             this.rowCount = rowCount;
             this.columnCount = columnCount;
-            this.themeClass = themeClass;
+
+            this.view = view;
+
             this.mineCount = mineCount;
             this.seconds = 0;
             this.userMineCount = mineCount; // The mines the user has marked
@@ -196,7 +213,6 @@
             // create a virtual game grid and pre-populate mine counts & locations
             this.gameGrid = this.populateGrid(this.createGrid(this.mineLocations, rowCount, columnCount), this.mineLocations);
         },
-
 
         // Creates the game board and UI elements, and adds them to the DOM
         renderGameDisplay: function() {
@@ -219,9 +235,13 @@
         
         // Starts the game
         run: function() {
-            this.renderGameDisplay();
+            //this.renderGameDisplay();
+            this.view.render();
             this.enableCellEvents();
             this.startTimer();
+
+            this.view.setInputs('easy');
+            this.enableEvents();
         },
         
         
@@ -262,7 +282,7 @@
             }
         },
         
-        
+        // remove this once event binding is working
         enableCellEvents: function() {
             var self = this;
             // click behavior
@@ -281,6 +301,18 @@
                     self.rightClick($(e.target));
                 });
             }
+        },
+
+        doEventBinding: function() {
+            var self = this;
+
+            this.view.on('ms.cellReveal', function(e, $cell) {
+                self.revealCell($cell);
+            });
+
+            this.view.on('ms.cellRightClick', function(e) {
+                self.rightClick($(e.target));
+            });
         },
 
 
