@@ -57,8 +57,6 @@
         },
 
         getElements: function() {
-            this.el.btnConfig = $('<a data-js="modal" id="ms_info" href="#" rel="#ms_config">info</a>');
-            
             // Config menu
             this.el.config = $(this.html.getConfigMenu()).hide();
             this.el.levelSelect = this.el.config.find('#ms_level_select');
@@ -69,6 +67,7 @@
             this.el.btnCancel = this.el.config.find('#ms_btn_cancel');
 
             // fragments
+            this.el.btnConfig = $('<a data-js="modal" id="ms_info" href="#" rel="#ms_config">info</a>');
             this.el.statusBar = $('<div id="ms_status" class="ms_status"></div>');
             this.el.timer = $('<div class="ms_timer">0</div>');
             this.el.gameContainer = $('<div class="ms_container"></div>');
@@ -78,6 +77,8 @@
             
             var self = this;
             
+            // Enable the overlay plugin to
+            // show the config modal when btnConfig is clicked
             if ($.fn.overlay) {
                 this.el.btnConfig.overlay();
             }
@@ -91,6 +92,8 @@
             // Get the current level settings and
             // trigger the gameStart event
             this.el.btnStart.click(function(e) {
+                
+                // get the current form values
                 var config = {
                     rowCount: self.el.inputRows.val(),
                     columnCount: self.el.inputColumns.val(),
