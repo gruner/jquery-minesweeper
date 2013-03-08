@@ -19,10 +19,10 @@
             var ms = new Minesweeper(),
                 msView = new MinesweeperView();
 
-            msView.init($this, o.mineCount, o.rowCount, o.columnCount, theme);
+            msView.init($this, o.mineCount, o.rowCount, o.columnCount, o.theme);
             ms.init(o.mineCount, o.rowCount, o.columnCount, msView);
 
-            msView.on('ms.gameStart', function(e, config) {
+            msView.events.on('ms.gameStart', function(e, config) {
                 // todo: tear down existing instances and create new ones
                 console.log('ms.gameStart');
             });
@@ -45,6 +45,10 @@
         init: function($container, mineCount, rowCount, columnCount, themeClass) {
             this.el = {};
             this.el.container = $container;
+
+            // Create an empty jQuery object
+            // for triggering custom events
+            this.events = $({});
 
             this.mineCount = mineCount;
             this.rowCount = rowCount;
@@ -94,7 +98,7 @@
                 // close modal
                 self.el.btnConfig.overlay().close();
 
-                self.trigger('ms.gameStart', config);
+                self.events.trigger('ms.gameStart', config);
                 
                 return false;
             });
@@ -107,8 +111,8 @@
 
             // Delegate cell clicks to the parent table
             // Trigger the custom event for revealing the cell
-            this.el.msTable.delegate('td', 'click', function(e) {
-                self.trigger('ms.cellReveal', $(this));
+            this.el.msTable.on('click', 'td', function(e) {
+                self.events.trigger('ms.cellClick', this);
             });
 
             // Disable right-click context menu on the table
@@ -119,9 +123,19 @@
             // Set right-click behavior
             if ($.fn.rightClick) {
                 this.$msTable.rightClick(function(e) {
-                    self.trigger('ms.cellRightClick', $(e.target));
+                    self.events.trigger('ms.cellRightClick', $(e.target));
                 });
             }
+
+            this.events.on('ms.gameEnd', function(e) {
+                // remove all click events
+                self.el.msTable.off('click', 'td');
+
+                self.revealMistakes();
+
+                // disable rollover states
+                self.el.msTable.find('.blank').removeClass('blank');
+            });
         },
         
         html: {
@@ -164,16 +178,21 @@
                 .append(this.el.statusBar)
                 ;
             
-            this.el.container.html(this.el.gameContainer.clone(true));
+            // this.el.container.html(this.el.gameContainer.clone(true)); // not sure why we were trying to clone it
+            this.el.container.html(this.el.gameContainer);
         },
         
         // Sets form input values
         setInputs: function(level) {
-            if (this.levels[level]) {
-                this.el.inputRows.val(this.levels[level].rowCount);
-                this.el.inputColumns.val(this.levels[level].columnCount);
-                this.el.inputMines.val(this.levels[level].mineCount);
-            }
+            this.el.inputRows.val(level.rowCount);
+            this.el.inputColumns.val(level.columnCount);
+            this.el.inputMines.val(level.mineCount);
+        },
+
+        revealMistakes: function() {
+            this.el.msTable.find('.flag').each(function(i, cell) {
+                $(cell).removeClass('flag').addClass('notMine');
+            });
         }
     };
     
@@ -213,104 +232,31 @@
             // create a virtual game grid and pre-populate mine counts & locations
             this.gameGrid = this.populateGrid(this.createGrid(this.mineLocations, rowCount, columnCount), this.mineLocations);
         },
-
-        // Creates the game board and UI elements, and adds them to the DOM
-        renderGameDisplay: function() {
-            
-            this.$msTable = $(this.html.getTable(this.rowCount, this.columnCount, this.themeClass));
-            this.$timer = $(this.html.getTimer());
-            this.$counter = $(this.html.getMineCounter(this.mineCount));
-            
-            var $statusDiv = $(this.html.getStatusDiv())
-                .append(this.$timer)
-                .append(this.$counter)
-                ;
-            
-            this.$container
-                .append(this.$msTable)
-                .append($statusDiv)
-                ;
-        },
         
         
         // Starts the game
         run: function() {
-            //this.renderGameDisplay();
-            this.view.render();
-            this.enableCellEvents();
+            
             this.startTimer();
 
-            this.view.setInputs('easy');
-            this.enableEvents();
+            this.view.levels = this.levels;
+            this.view.render();
+
+            this.view.setInputs(this.levels.easy);
+            this.view.enableEvents();
+
+            this.doEventBinding();
         },
         
-        
-        // Verifies that the grid dimensions will accomodate the given mineCount
-        validate: function(cellCount, mineCount) {
-            return (mineCount < cellCount);
-        },
-        
-        
-        html: {
-            // Returns the table html populated with rows and columns
-            getTable: function(rowCount, columnCount, themeClass) {
-                var msTable = '<table class="ms_table ' + themeClass + '">'; //create table
-
-                for (var row=0; row < rowCount; row++) {
-                    msTable += '<tr>';
-                    for (var col=0; col < columnCount; col++) {
-                        msTable += '<td id="'+ row +'-'+ col +'" class="blank"></td>';
-                    }
-                    msTable += '</tr>';
-                }
-                msTable += '</table>';
-
-                return msTable;
-            },
-            
-            getStatusDiv: function() {
-                return '<div id="ms_status" class="ms_status"></div>';
-            },
-            
-            getMineCounter: function(mineCount) {
-                return '<div class="ms_counter">' + mineCount + '</div>';
-            },
-
-
-            getTimer: function() {
-                return '<div class="ms_timer">0</div>';
-            }
-        },
-        
-        // remove this once event binding is working
-        enableCellEvents: function() {
-            var self = this;
-            // click behavior
-            this.$msTable.delegate('td', 'click', function(e) {
-                self.revealCell($(this));
-            });
-
-            // Disable right-click context menu on the table
-            if ($.fn.noContext) {
-                this.$msTable.noContext();
-            }
-
-            // Set right-click behavior
-            if ($.fn.rightClick) {
-                this.$msTable.rightClick(function(e) {
-                    self.rightClick($(e.target));
-                });
-            }
-        },
 
         doEventBinding: function() {
             var self = this;
 
-            this.view.on('ms.cellReveal', function(e, $cell) {
-                self.revealCell($cell);
+            this.view.events.on('ms.cellClick', function(e, cell) {
+                self.revealCell($(cell));
             });
 
-            this.view.on('ms.cellRightClick', function(e) {
+            this.view.events.on('ms.cellRightClick', function(e) {
                 self.rightClick($(e.target));
             });
         },
@@ -384,6 +330,7 @@
 
 
         // Show all the mines by adding the 'mineSplode' class
+        // @TODO: move this to view
         revealMines: function(mines) {
             var mineIDs = this.getMineIDs(mines);
             $.each(mineIDs, function(count, mine) {
@@ -392,28 +339,15 @@
         },
 
 
-        revealMistakes: function() {
-            this.$msTable.find('.flag').each(function(i, cell) {
-                $(cell).removeClass('flag').addClass('notMine');
-            });
-        },
-
-
         endGame: function(status) {
             if(status) {
                 // end the game in a good way
+                this.view.events.trigger('ms.gameWon');
             } else {
                 // mine has been clicked
-                
-                // remove all click events
-                this.$msTable.unbind();
-                this.$msTable.undelegate('td', 'click');
+                this.view.events.trigger('ms.gameEnd');
 
                 this.revealMines(this.mineLocations);
-                this.revealMistakes();
-
-                // disable rollover states
-                this.$msTable.find('.blank').removeClass('blank');
 
                 // stop timer
                 if (this.timer) { this.timer.stop(); }
