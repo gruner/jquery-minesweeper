@@ -38,6 +38,20 @@
         columnCount: 20,
         theme: 'snazzy'
     };
+    
+    var APP = {
+        models: {},
+        controllers: {},
+        views: {},
+        dispatcher: $({})
+    };
+    
+    APP.models.gameGrid = {};
+    APP.models.cell = {};
+    
+    APP.views.gameGrid = {};
+    APP.views.cell = {};
+    APP.views.controlls = {};
 
     // Creates the game controlls and UI
     $.fn.minesweeper.view = {
@@ -127,8 +141,8 @@
 
             // Set right-click behavior
             if ($.fn.rightClick) {
-                this.$msTable.rightClick(function(e) {
-                    self.events.trigger('ms.cellRightClick', $(e.target));
+                this.el.msTable.rightClick(function(e) {
+                    self.events.trigger('ms.cellRightClick', $(e.target).attr('id'));
                 });
             }
 
@@ -266,8 +280,8 @@
                 self.revealCell($(cell));
             });
 
-            this.view.events.on('ms.cellRightClick', function(e) {
-                self.rightClick($(e.target));
+            this.view.events.on('ms.cellRightClick', function(e, cellId) {
+                self.rightClick(cellId);
             });
         },
 
@@ -285,8 +299,9 @@
         },
 
 
-        rightClick: function($cell) {
-            var cellID = $cell.attr('id'),
+        rightClick: function(cellID) {
+
+            var $cell = $('#' + cellID),
                 clickStates = Array('flag','question','blank'),
                 hasState = false;
 
@@ -325,7 +340,7 @@
         
         updateMineCountDisplay: function(decrement) {
             this.userMineCount -= decrement;
-            this.$counter.html(this.userMineCount);
+            this.view.el.counter.html(this.userMineCount);
         },
         
 
@@ -555,14 +570,12 @@
                     col = parseInt(cellDims[1], 10);
 
                 if (!grid) { // grid is passed back on recursive calls so we don't have to look it up again
-                    console.log('getting grid');
                     grid = this.gameGrid;
                 }
 
                 var cellContents = grid[row][col];
 
                 // TODO: find out why cellContents is not a string sometimes
-
                 if (cellContents === undefined) {
                     console.log('cellContents is undefined');
                     console.log(grid[row]);
@@ -579,6 +592,14 @@
                 }
                 // cell is empty
                 else if (cellContents === 0) {
+                    
+                    // TODO check if we've revealed the last mine-free cell
+                    if (false) {
+                        this.view.events.fire('ms.gameWon');
+                        return;
+                    }
+                    
+                    
                     // parentRow will be null on first run
                     if (parentRow === undefined || $.inArray([row, col], this.getAdjacentCells(parentRow, parentCol))) {
                         this.revealSurroundingCells(grid, row, col);

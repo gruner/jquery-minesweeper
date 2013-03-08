@@ -6,20 +6,22 @@
   <link rel="stylesheet" href="themes/minesweeper-themes.css">
   <style type="text/css">
     body { background: #000; }
-    .ms_table { margin:30px auto; }
+    .ms_table { margin: 30px auto 0 auto; }
   </style>
   <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  <!--<script src="http://cdn.jquerytools.org/1.2.7/tiny/jquery.tools.min.js"></script>-->
+  <script src="plugins/jquery.rightClick.js"></script>
   <script src="jquery.minesweeper.js"></script>
 </head>
 <body>
-  <div id="ms_container"></div>
+  <div id="ms_demo"></div>
     <script>
     $(document).ready(function() {
-        $('#ms_container').minesweeper({
+        $('#ms_demo').minesweeper({
             rowCount: 20,
             columnCount: 20,
             mineCount: 40,
-            theme: 'snazzy'
+            theme: 'tron'
         });
     });
   </script>

@@ -67,3 +67,48 @@
 .ms_table td.notMine {background-position: 0 -260px;}
 .ms_table td.question {background-position: 0 -280px;}
 .ms_table td.question:hover {background-position: -20px -280px;}
+
+/*   */
+
+.ms_status {
+  font-family: Helvetica, sans-serif;
+  width: 400px;
+  margin: 5px auto 0; }
+
+.ms_counter,
+.ms_timer {
+  background: url(minesweeper-sprite.png) 0 5px no-repeat;
+  color: white;
+  float: left;
+  padding: 5px 5px 5px 25px;
+  width: 20px;
+  margin-right: 20px; }
+
+.ms_counter {
+  background-position: 0 -45px; }
+
+a#ms_info {
+  text-indent: -1000px;
+  overflow: hidden;
+  background: url(minesweeper-sprite.png) 0 -100px no-repeat;
+  width: 18px;
+  height: 18px;
+  float: right;
+  border: none;
+  margin-top: 5px; }
+
+#ms_config {
+  margin: 0 auto;
+  overflow: hidden;
+  -moz-box-shadow: 0 0 50px #00cc33;
+  -webkit-box-shadow: 0 0 50px #00cc33;
+  width: 400px;
+  border-color: #02c0c3;
+  background-color: #00282e; }
+
+  #ms_config div {
+    width: 220px;
+    margin: 0 10px;
+    overflow: hidden;
+    float: left;
+    display: inline; }
