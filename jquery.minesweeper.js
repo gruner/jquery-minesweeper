@@ -58,13 +58,15 @@
 
         getElements: function() {
             this.el.btnConfig = $('<a data-js="modal" id="ms_info" href="#" rel="#ms_config">info</a>');
-            this.el.levelSelect = $('#ms_level_select');
-            this.el.inputRows = $('#ms_rows');
-            this.el.inputColumns = $('#ms_columns');
-            this.el.inputMines = $('#ms_mines');
-            this.el.btnStart = $('#ms_btn_start');
-            this.el.btnCancel = $('#ms_btn_cancel');
-            this.el.config = $('#ms_config');
+            
+            // Config menu
+            this.el.config = $(this.html.getConfigMenu()).hide();
+            this.el.levelSelect = this.el.config.find('#ms_level_select');
+            this.el.inputRows = this.el.config.find('#ms_rows');
+            this.el.inputColumns = this.el.config.find('#ms_columns');
+            this.el.inputMines = this.el.config.find('#ms_mines');
+            this.el.btnStart = this.el.config.find('#ms_btn_start');
+            this.el.btnCancel = this.el.config.find('#ms_btn_cancel');
 
             // fragments
             this.el.statusBar = $('<div id="ms_status" class="ms_status"></div>');
@@ -157,6 +159,10 @@
             
             getMineCounter: function(mineCount) {
                 return '<div class="ms_counter">' + mineCount + '</div>';
+            },
+
+            getConfigMenu: function() {
+                return '<div id="ms_config" class="modal"><form><div><p><label for="ms_rows">Rows</label><br><input type="text" name="ms_rows" id="ms_rows"></p><p><label for="ms_columns">Columns</label><br><input type="text" name="ms_columns" id="ms_columns"></p><p><label for="ms_mines">Mines</label><br><input type="text" name="ms_mines" id="ms_mines"></p></div><div><label for="ms_level_select">Level</label><br><select id="ms_level_select"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option><option value="custom">Custom</option></select></div><button id="ms_btn_cancel">Cancel</button><button id="ms_btn_start">Start Game</button></form></div>';
             }
         },
         
@@ -176,6 +182,7 @@
             this.el.gameContainer
                 .append(this.el.msTable)
                 .append(this.el.statusBar)
+                .append(this.el.config)
                 ;
             
             // this.el.container.html(this.el.gameContainer.clone(true)); // not sure why we were trying to clone it
@@ -320,12 +327,11 @@
         
 
         startTimer: function() {
-            if (! $.fn.timer) { return; }
             var self = this;
-            this.timer = $.timer(1000, function(timer) {
+            this.timer = setInterval(function() {
                 self.seconds++;
-                self.$timer.html(self.seconds);
-            });
+                self.view.el.timer.html(self.seconds);
+            }, 1000);
         },
 
 
@@ -350,7 +356,7 @@
                 this.revealMines(this.mineLocations);
 
                 // stop timer
-                if (this.timer) { this.timer.stop(); }
+                if (this.timer) { clearInterval(this.timer); }
             }
         },
         
